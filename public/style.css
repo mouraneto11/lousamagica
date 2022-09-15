@@ -1,0 +1,9 @@
+*{
+    margin: 1px;
+    padding: 1px;
+}
+#lousa{
+    width: 700px;
+    height: 500px;
+    border: 1px solid;
+}
