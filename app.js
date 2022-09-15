@@ -9,19 +9,22 @@ app.use(express.static(__dirname + '/public'))
 
 const io = socketIo.listen(server);
 
-server.listen(3000,()=>{
-    console.log("running");
+let history = []
+
+io.on('connection', socket => {
+
+  console.log(`Init connection: ID ${socket.id}`)
+
+  history.forEach(line => socket.emit('draw', line)) //socket envia apenas para novas conexões
+
+  socket.on('clear', ()=>{
+    history = new Array()
+    io.emit('draw') //io envia para todos 
+  })
+  socket.on('draw', line => {
+    history.push(line)
+    io.emit('draw', line)
+  })
 })
 
-app.use(express.static(__dirname + "/public"));
-
-io.on('connection',(socket)=>{
-    console.log('Nova conexão!');
-
-
-    socket.on('draw', (line) => {
-        io.emit('draw', line);
-    })
-
-
-})
+server.listen(3000, ()=> console.log(`Server running in: http://localhost:3000`))

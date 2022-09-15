@@ -1,56 +1,63 @@
-document.addEventListener('DOMContentLoaded',()=>{
+document.addEventListener('DOMContentLoaded', ()=>{
 
-    const socket = io.connect();
-
-    const pencil = {
-        ativo: false,
-        movendo: false,
-        posAfter:{x:0,y:0},
-        posCurrent: null
+    const socket = io.connect()
+  
+    const pincel = {
+      active: false,
+      move: false,
+      posCurrent: {x: 0, y: 0},
+      posAfter: null
     }
-    const lousa = document.querySelector('#lousa');
-    const context = lousa.getContext('2d');
-
-    lousa.width = 700;
-    lousa.height = 500;
-
-
-    context.lineWidth = 7;
-    context.strokeStyle = 'red';
+  
+    const canvas = document.querySelector('#lousa')
+    canvas.width = 800
+    canvas.height = 600
+  
+    const context = canvas.getContext('2d')
+    context.lineWidth = 4
+    context.strokeStyle = 'yellow'
+  
     const drawLine = (line) => {
-        
-          context.beginPath()
-          context.moveTo(line.posAfter.x, line.posAfter.y)
-          context.lineTo(line.posCurrent.x, line.posCurrent.y)
-          context.stroke()
-        
+      if(line){
+        context.beginPath()
+        context.moveTo(line.posAfter.x, line.posAfter.y)
+        context.lineTo(line.posCurrent.x, line.posCurrent.y)
+        context.stroke()
       }
+      else {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
     
-    lousa.onmousedown = (evento) => {pencil.ativo = true};
-    lousa.onmouseup = (evento) => {pencil.ativo = false};
-
-    lousa.onmousemove = (evento) => {
-        pencil.posAfter.x = evento.clientX
-        pencil.posAfter.y = evento.clientY
-        pencil.movendo = true;
+    canvas.onmousedown = () => { pincel.active = true }
+    canvas.onmouseup = () => { pincel.active = false }
+    canvas.onmousemove = event => { 
+      pincel.posCurrent.x = event.clientX
+      pincel.posCurrent.y = event.clientY
+      pincel.move = true
     }
-
-    socket.on('draw',(line)=>{
-        drawLine(line);
+  
+    socket.on('draw', line => {
+      drawLine(line)
     })
-
-    const ciclo = () => {
-        if(pencil.ativo && pencil.movendo && pencil.posCurrent){
-            socket.emit('draw',{ posAfter: pencil.posAfter, posCurrent: pencil.posCurrent });
-            //drawLine({ posAfter: pencil.posAfter, posCurrent: pencil.posCurrent})
-            pencil.movendo = false;
-        }
-        pencil.posCurrent = { x: pencil.posAfter.x, y: pencil.posAfter.y};
-        setTimeout(ciclo, 10);
+  
+    const cycle = () => {
+      if (pincel.active && pincel.move && pincel.posAfter){
+        socket.emit('draw', {posCurrent: pincel.posCurrent, posAfter: pincel.posAfter})
+        // drawLine({posCurrent: pincel.posCurrent, posAfter: pincel.posAfter})
+        pincel.move = false
+      }
+      pincel.posAfter = { x: pincel.posCurrent.x, y: pincel.posCurrent.y}
+  
+      setTimeout(cycle, 10)
     }
-
-    ciclo();
-        
-
-
-})
+  
+    cycle()
+  
+    document.body.addEventListener('keyup', e => {
+      if(e.keyCode === 32){
+        socket.emit('clear')
+      }
+    })
+  
+  })
